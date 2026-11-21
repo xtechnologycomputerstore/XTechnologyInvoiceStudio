@@ -25,15 +25,29 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Find Invoice Studio HTML
+      -       - name: Find Invoice Studio HTML
         run: |
-          HTML_FILE=$(find . -maxdepth 2 -type f -iname "*.html" ! -path "./.github/*" | head -n 1)
+          HTML_FILE=$(find . -type f -iname "*.html" ! -path "./.git/*" ! -path "./.github/*" | head -n 1)
+
           if [ -z "$HTML_FILE" ]; then
-            echo "ERROR: Invoice Studio HTML file not found"
+            ZIP_FILE=$(find . -type f -iname "*.zip" ! -path "./.git/*" ! -path "./.github/*" | head -n 1)
+
+            if [ -n "$ZIP_FILE" ]; then
+              mkdir -p extracted
+              unzip -o "$ZIP_FILE" -d extracted
+              HTML_FILE=$(find extracted -type f -iname "*.html" | head -n 1)
+            fi
+          fi
+
+          if [ -z "$HTML_FILE" ]; then
+            echo "ERROR: HTML or ZIP containing HTML not found"
+            echo "Repository files:"
+            find . -type f
             exit 1
           fi
-          echo "HTML_FILE=$HTML_FILE" >> $GITHUB_ENV
+
           echo "Found HTML: $HTML_FILE"
+          echo "HTML_FILE=$HTML_FILE" >> $GITHUB_ENV
 
       - name: Create Android project
         run: |
